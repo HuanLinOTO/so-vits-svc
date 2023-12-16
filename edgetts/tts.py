@@ -1,4 +1,5 @@
 import asyncio
+import os
 import random
 import sys
 
@@ -13,7 +14,10 @@ LANG = detect(TEXT) if sys.argv[2] == "Auto" else sys.argv[2]
 RATE = sys.argv[3]
 VOLUME = sys.argv[4]
 GENDER = sys.argv[5] if len(sys.argv) == 6 else None
-OUTPUT_FILE = "tts.wav"
+if not os.path.exists("tmp"):
+    os.mkdir("tmp")
+
+OUTPUT_FILE = sys.argv[6]
 
 print("Running TTS...")
 print(f"Text: {TEXT}, Language: {LANG}, Gender: {GENDER}, Rate: {RATE}, Volume: {VOLUME}")
@@ -30,7 +34,7 @@ async def _main() -> None:
         VOICE = random.choice(voice)["Name"]
         print(f"Using random {LANG} voice: {VOICE}")
     else:
-        VOICE = LANG
+        VOICE = "zh-CN-XiaoxiaoNeural"
         
     communicate = edge_tts.Communicate(text = TEXT, voice = VOICE, rate = RATE, volume = VOLUME)
     await communicate.save(OUTPUT_FILE)
