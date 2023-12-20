@@ -1,31 +1,56 @@
 import io
 import os
-import subprocess
+import asyncio 
 import sys
 
 import numpy as np
 import soundfile
-from flask import Flask, request, send_file
 
 from inference import infer_tool, slicer
+from fastapi.responses import FileResponse
 
-app = Flask(__name__)
+from fastapi import FastAPI
+from pydantic import BaseModel
 
+import logger
 
+app = FastAPI()
 
-@app.route("/tts", methods=["GET"])
-def tts():
-    params = request.args
-    
-    text = params.get("text", None)  # wav文件地址
-    tran = int(float(params.get("tran", 0)))  # 音调
-    spk = params.get("spk", 0)  # 说话人(id或者name都可以,具体看你的config)
+model_name = "logs/44k-1/G_14500.pth"  # 模型地址
+config_name = "logs/44k-1/config-an.json"  # config地址
+svc_model = infer_tool.Svc(model_name, config_name)
+
+class RequestBody(BaseModel): 
+    text: str
+
+@app.get("/wav/{id}")
+async def get_wav(id):
+    if not os.path.exists(f"tmp/tts{id}.wav"):
+        return {
+            "status": "error",
+            "message": "wav not found"
+        }
+    return FileResponse(f"tmp/tts{id}.wav", media_type="audio/wav", filename="tts.wav")
+
+@app.post("/infer/{spk}")
+async def tts(spk, req: RequestBody):
+    tran = int(0)  # 音调
     wav_format = 'wav'  # 范围文件格式
-
+    text = req.text
     unique_value = hash((text, "Auto", '+0%', '+0%', 'Male'))
-    subprocess.run([sys.executable, "edgetts/tts.py", text, "Auto", '+0%', '+0%', 'Male', f"tmp/tts{unique_value}.wav"])
-
     audio_path = f"tmp/tts{unique_value}.wav"
+    
+    if not os.path.exists("tmp"):
+        os.mkdir("tmp")
+    if os.path.exists(audio_path):
+        return {
+            "status": "success",
+            "src": "/wav/" + str(unique_value)
+        }
+    
+    tts_process = await asyncio.create_subprocess_exec(sys.executable, "edgetts/tts.py", text, "Auto", '+0%', '+0%', 'Male', audio_path)
+    await tts_process.wait()
+    # audio_path = f"tmp/tts-4798745368944844903.wav"
 
     infer_tool.format_wav(audio_path)
     chunks = slicer.cut(audio_path, db_thresh=-40)
@@ -33,7 +58,7 @@ def tts():
 
     audio = []
     for (slice_tag, data) in audio_data:
-        print(f'#=====segment start, {round(len(data) / audio_sr, 3)}s======')
+        logger.info(f'#=====segment start, {round(len(data) / audio_sr, 3)}s======')
 
         length = int(np.ceil(len(data) / audio_sr * svc_model.target_sample))
         if slice_tag:
@@ -53,14 +78,10 @@ def tts():
             _audio = _audio[pad_len:-pad_len]
 
         audio.extend(list(infer_tool.pad_array(_audio, length)))
-    out_wav_path = io.BytesIO()
+    out_wav_path = audio_path
     soundfile.write(out_wav_path, audio, svc_model.target_sample, format=wav_format)
-    out_wav_path.seek(0)
-    return send_file(out_wav_path, download_name=f"temp.{wav_format}", as_attachment=True)
 
-
-if __name__ == '__main__':
-    model_name = "logs/44k/G_14500.pth"  # 模型地址
-    config_name = "logs/44k/config-an.json"  # config地址
-    svc_model = infer_tool.Svc(model_name, config_name)
-    app.run(port=1145, host="0.0.0.0", debug=False, threaded=False)
+    return {
+        "status": "success",
+        "src": "/wav/" + str(unique_value)
+    }

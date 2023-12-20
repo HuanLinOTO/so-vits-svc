@@ -34,7 +34,7 @@ async def _main() -> None:
         VOICE = random.choice(voice)["Name"]
         print(f"Using random {LANG} voice: {VOICE}")
     else:
-        VOICE = "zh-CN-XiaoxiaoNeural"
+        VOICE = "zh-CN-YunyangNeural"
         
     communicate = edge_tts.Communicate(text = TEXT, voice = VOICE, rate = RATE, volume = VOLUME)
     await communicate.save(OUTPUT_FILE)
