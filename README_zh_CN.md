@@ -355,6 +355,16 @@ python train.py -c configs/config.json -m 44k
 
 这里提供了一个可以随时暂停训练并保存模型的方法，在运行目录下面新建一个 `stop.txt` 即可，训练会在下一个 step 结束后停止并保存模型
 
+如果你用的是 Linux，你可以在安装 torchtriton 后使用如下命令启用 `torch.compile` 加速
+
+```sh
+USE_TORCH_COMPILE=1 python train.py -c configs/config.json -m 44k
+```
+
+```sh
+pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu117"
+```
+
 ### 扩散模型（可选）
 
 尚若需要浅扩散功能，需要训练扩散模型，扩散模型训练方法为：

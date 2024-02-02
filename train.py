@@ -112,6 +112,14 @@ def run(rank, n_gpus, hps):
     scheduler_g = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2)
     scheduler_d = torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2)
 
+    use_torch_compile = os.environ["USE_TORCH_COMPILE"] == 1
+    if use_torch_compile:
+        logger.info("You are using [green]torch.compile[/green] for faster speed, it's still a [red]beta[/red] feature.")
+        logger.info("If you has any problem, please issues it with your log at [green]https://github.com/huanlinoto/so-vits-svc.[/green]")
+        logger.info("Compiling the train_and_evaluate function...")
+        train_and_evaluate = torch.compile(train_and_evaluate)
+        logger.info("Compiled!")
+
     scaler = GradScaler(enabled=hps.train.fp16_run)
     with logger.Progress() as progress:
         for epoch in range(epoch_str, hps.train.epochs + 1):
