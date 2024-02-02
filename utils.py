@@ -137,7 +137,7 @@ def get_speech_encoder(speech_encoder,device=None,log=True,**kargs):
         speech_encoder_object = HubertSoft(device = device,log=log)
     elif speech_encoder == "whisper-ppg":
         from vencoder.WhisperPPG import WhisperPPG
-        speech_encoder_object = WhisperPPG(device = device,log=log)
+        speech_encoder_object = WhisperPPG(device = device)
     elif speech_encoder == "cnhubertlarge":
         from vencoder.CNHubertLarge import CNHubertLarge
         speech_encoder_object = CNHubertLarge(device = device,log=log)
