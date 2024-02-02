@@ -362,7 +362,7 @@ USE_TORCH_COMPILE=1 python train.py -c configs/config.json -m 44k
 ```
 
 ```sh
-pip install torchtriton --extra-index-url "https://download.pytorch.org/whl/nightly/cu117"
+pip install torchtriton --index-url "https://download.pytorch.org/whl/nightly/cu117"
 ```
 
 ### 扩散模型（可选）
