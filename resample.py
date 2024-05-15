@@ -10,6 +10,7 @@ from scipy.io import wavfile
 
 import logger
 
+
 def load_wav(wav_path):
     return librosa.load(wav_path, sr=None)
 
@@ -30,11 +31,7 @@ def resample_wav(wav, sr, target_sr):
 
 
 def save_wav_to_path(wav, save_path, sr):
-    wavfile.write(
-        save_path,
-        sr,
-        (wav * np.iinfo(np.int16).max).astype(np.int16)
-    )
+    wavfile.write(save_path, sr, (wav * np.iinfo(np.int16).max).astype(np.int16))
 
 
 def process(item):
@@ -42,7 +39,7 @@ def process(item):
     speaker = spkdir.replace("\\", "/").split("/")[-1]
 
     wav_path = os.path.join(args.in_dir, speaker, wav_name)
-    if os.path.exists(wav_path) and '.wav' in wav_path:
+    if os.path.exists(wav_path) and ".wav" in wav_path:
         os.makedirs(os.path.join(args.out_dir2, speaker), exist_ok=True)
 
         wav, sr = load_wav(wav_path)
@@ -74,24 +71,42 @@ def process_all_speakers():
 
 
 def process_all_speakers():
-    process_count = 30 if os.cpu_count() > 60 else (os.cpu_count() - 2 if os.cpu_count() > 4 else 1)
+    process_count = (
+        30 if os.cpu_count() > 60 else (os.cpu_count() - 2 if os.cpu_count() > 4 else 1)
+    )
     with ProcessPoolExecutor(max_workers=process_count) as executor:
         with logger.Progress() as progress:
             for speaker in speakers:
                 spk_dir = os.path.join(args.in_dir, speaker)
                 if os.path.isdir(spk_dir):
                     print(spk_dir)
-                    futures = [executor.submit(process, (spk_dir, i, args)) for i in os.listdir(spk_dir) if i.endswith("wav")]
-                    for _ in progress.track(concurrent.futures.as_completed(futures), total=len(futures), description="resampling:"):
+                    futures = [
+                        executor.submit(process, (spk_dir, i, args))
+                        for i in os.listdir(spk_dir)
+                        if i.endswith("wav")
+                    ]
+                    for _ in progress.track(
+                        concurrent.futures.as_completed(futures),
+                        total=len(futures),
+                        description="resampling:",
+                    ):
                         pass
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--sr2", type=int, default=44100, help="sampling rate")
-    parser.add_argument("--in_dir", type=str, default="./dataset_raw", help="path to source dir")
-    parser.add_argument("--out_dir2", type=str, default="./dataset/44k", help="path to target dir")
-    parser.add_argument("--skip_loudnorm", action="store_true", help="Skip loudness matching if you have done it")
+    parser.add_argument(
+        "--in_dir", type=str, default="./dataset_raw", help="path to source dir"
+    )
+    parser.add_argument(
+        "--out_dir2", type=str, default="./dataset/44k", help="path to target dir"
+    )
+    parser.add_argument(
+        "--skip_loudnorm",
+        action="store_true",
+        help="Skip loudness matching if you have done it",
+    )
     args = parser.parse_args()
 
     print(f"CPU count: {cpu_count()}")

@@ -10,7 +10,8 @@ import torchcrepe
 from torch import nn
 from torch.nn import functional as F
 
-#from:https://github.com/fishaudio/fish-diffusion
+# from:https://github.com/fishaudio/fish-diffusion
+
 
 def repeat_expand(
     content: Union[torch.Tensor, np.ndarray], target_len: int, mode: str = "nearest"
@@ -87,29 +88,33 @@ class BasePitchExtractor:
 
         if self.keep_zeros:
             return f0
-        
+
         vuv_vector = torch.zeros_like(f0)
         vuv_vector[f0 > 0.0] = 1.0
         vuv_vector[f0 <= 0.0] = 0.0
-        
+
         # 去掉0频率, 并线性插值
         nzindex = torch.nonzero(f0).squeeze()
         f0 = torch.index_select(f0, dim=0, index=nzindex).cpu().numpy()
         time_org = self.hop_length / sampling_rate * nzindex.cpu().numpy()
         time_frame = np.arange(pad_to) * self.hop_length / sampling_rate
-        
-        vuv_vector = F.interpolate(vuv_vector[None,None,:],size=pad_to)[0][0]
+
+        vuv_vector = F.interpolate(vuv_vector[None, None, :], size=pad_to)[0][0]
 
         if f0.shape[0] <= 0:
-            return torch.zeros(pad_to, dtype=torch.float, device=x.device),vuv_vector.cpu().numpy()
+            return torch.zeros(
+                pad_to, dtype=torch.float, device=x.device
+            ), vuv_vector.cpu().numpy()
         if f0.shape[0] == 1:
-            return torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[0],vuv_vector.cpu().numpy()
-    
+            return torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[
+                0
+            ], vuv_vector.cpu().numpy()
+
         # 大概可以用 torch 重写?
         f0 = np.interp(time_frame, time_org, f0, left=f0[0], right=f0[-1])
-        #vuv_vector = np.ceil(scipy.ndimage.zoom(vuv_vector,pad_to/len(vuv_vector),order = 0))
-        
-        return f0,vuv_vector.cpu().numpy()
+        # vuv_vector = np.ceil(scipy.ndimage.zoom(vuv_vector,pad_to/len(vuv_vector),order = 0))
+
+        return f0, vuv_vector.cpu().numpy()
 
 
 class MaskedAvgPool1d(nn.Module):
@@ -228,8 +233,10 @@ class MaskedMedianPool1d(nn.Module):
         mask = mask.contiguous().view(mask.size()[:3] + (-1,)).to(x.device)
 
         # Combine the mask with the input tensor
-        #x_masked = torch.where(mask.bool(), x, torch.fill_(torch.zeros_like(x),float("inf")))
-        x_masked = torch.where(mask.bool(), x, torch.FloatTensor([float("inf")]).to(x.device))
+        # x_masked = torch.where(mask.bool(), x, torch.fill_(torch.zeros_like(x),float("inf")))
+        x_masked = torch.where(
+            mask.bool(), x, torch.FloatTensor([float("inf")]).to(x.device)
+        )
 
         # Sort the masked tensor along the last dimension
         x_sorted, _ = torch.sort(x_masked, dim=-1)
@@ -238,14 +245,16 @@ class MaskedMedianPool1d(nn.Module):
         valid_count = mask.sum(dim=-1)
 
         # Calculate the index of the median value for each pooling window
-        median_idx = (torch.div((valid_count - 1), 2, rounding_mode='trunc')).clamp(min=0)
+        median_idx = (torch.div((valid_count - 1), 2, rounding_mode="trunc")).clamp(
+            min=0
+        )
 
         # Gather the median values using the calculated indices
         median_pooled = x_sorted.gather(-1, median_idx.unsqueeze(-1).long()).squeeze(-1)
 
         # Fill infinite values with NaNs
         median_pooled[torch.isinf(median_pooled)] = float("nan")
-        
+
         if ndim == 2:
             return median_pooled.squeeze(1)
 
@@ -260,10 +269,10 @@ class CrepePitchExtractor(BasePitchExtractor):
         f0_max: float = 1100.0,
         threshold: float = 0.05,
         keep_zeros: bool = False,
-        device = None,
+        device=None,
         model: Literal["full", "tiny"] = "full",
         use_fast_filters: bool = True,
-        decoder="viterbi"
+        decoder="viterbi",
     ):
         super().__init__(hop_length, f0_min, f0_max, keep_zeros)
         if decoder == "viterbi":
@@ -314,7 +323,7 @@ class CrepePitchExtractor(BasePitchExtractor):
             batch_size=1024,
             device=x.device,
             return_periodicity=True,
-            decoder=self.decoder
+            decoder=self.decoder,
         )
 
         # Filter, remove silence, set uv threshold, refer to the original warehouse readme
@@ -325,7 +334,7 @@ class CrepePitchExtractor(BasePitchExtractor):
 
         pd = torchcrepe.threshold.Silence(-60.0)(pd, x, sampling_rate, self.hop_length)
         f0 = torchcrepe.threshold.At(self.threshold)(f0, pd)
-        
+
         if self.use_fast_filters:
             f0 = self.mean_filter(f0)
         else:
@@ -335,6 +344,6 @@ class CrepePitchExtractor(BasePitchExtractor):
 
         if torch.all(f0 == 0):
             rtn = f0.cpu().numpy() if pad_to is None else np.zeros(pad_to)
-            return rtn,rtn
-        
+            return rtn, rtn
+
         return self.post_process(x, sampling_rate, f0, pad_to)

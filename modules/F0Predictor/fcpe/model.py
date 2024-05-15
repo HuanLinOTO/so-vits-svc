@@ -13,29 +13,29 @@ def l2_regularization(model, l2_alpha):
     l2_loss = []
     for module in model.modules():
         if type(module) is nn.Conv2d:
-            l2_loss.append((module.weight ** 2).sum() / 2.0)
+            l2_loss.append((module.weight**2).sum() / 2.0)
     return l2_alpha * sum(l2_loss)
 
 
 class FCPE(nn.Module):
     def __init__(
-            self,
-            input_channel=128,
-            out_dims=360,
-            n_layers=12,
-            n_chans=512,
-            use_siren=False,
-            use_full=False,
-            loss_mse_scale=10,
-            loss_l2_regularization=False,
-            loss_l2_regularization_scale=1,
-            loss_grad1_mse=False,
-            loss_grad1_mse_scale=1,
-            f0_max=1975.5,
-            f0_min=32.70,
-            confidence=False,
-            threshold=0.05,
-            use_input_conv=True
+        self,
+        input_channel=128,
+        out_dims=360,
+        n_layers=12,
+        n_chans=512,
+        use_siren=False,
+        use_full=False,
+        loss_mse_scale=10,
+        loss_l2_regularization=False,
+        loss_l2_regularization_scale=1,
+        loss_grad1_mse=False,
+        loss_grad1_mse_scale=1,
+        f0_max=1975.5,
+        f0_min=32.70,
+        confidence=False,
+        threshold=0.05,
+        use_input_conv=True,
     ):
         super().__init__()
         if use_siren is True:
@@ -44,11 +44,18 @@ class FCPE(nn.Module):
             raise ValueError("Full model is not supported yet.")
 
         self.loss_mse_scale = loss_mse_scale if (loss_mse_scale is not None) else 10
-        self.loss_l2_regularization = loss_l2_regularization if (loss_l2_regularization is not None) else False
-        self.loss_l2_regularization_scale = loss_l2_regularization_scale if (loss_l2_regularization_scale
-                                                                             is not None) else 1
+        self.loss_l2_regularization = (
+            loss_l2_regularization if (loss_l2_regularization is not None) else False
+        )
+        self.loss_l2_regularization_scale = (
+            loss_l2_regularization_scale
+            if (loss_l2_regularization_scale is not None)
+            else 1
+        )
         self.loss_grad1_mse = loss_grad1_mse if (loss_grad1_mse is not None) else False
-        self.loss_grad1_mse_scale = loss_grad1_mse_scale if (loss_grad1_mse_scale is not None) else 1
+        self.loss_grad1_mse_scale = (
+            loss_grad1_mse_scale if (loss_grad1_mse_scale is not None) else 1
+        )
         self.f0_max = f0_max if (f0_max is not None) else 1975.5
         self.f0_min = f0_min if (f0_min is not None) else 32.70
         self.confidence = confidence if (confidence is not None) else False
@@ -56,8 +63,12 @@ class FCPE(nn.Module):
         self.use_input_conv = use_input_conv if (use_input_conv is not None) else True
 
         self.cent_table_b = torch.Tensor(
-            np.linspace(self.f0_to_cent(torch.Tensor([f0_min]))[0], self.f0_to_cent(torch.Tensor([f0_max]))[0],
-                        out_dims))
+            np.linspace(
+                self.f0_to_cent(torch.Tensor([f0_min]))[0],
+                self.f0_to_cent(torch.Tensor([f0_max]))[0],
+                out_dims,
+            )
+        )
         self.register_buffer("cent_table", self.cent_table_b)
 
         # conv in stack
@@ -66,7 +77,8 @@ class FCPE(nn.Module):
             nn.Conv1d(input_channel, n_chans, 3, 1, 1),
             nn.GroupNorm(4, n_chans),
             _leaky,
-            nn.Conv1d(n_chans, n_chans, 3, 1, 1))
+            nn.Conv1d(n_chans, n_chans, 3, 1, 1),
+        )
 
         # transformer
         self.decoder = PCmer(
@@ -76,15 +88,17 @@ class FCPE(nn.Module):
             dim_keys=n_chans,
             dim_values=n_chans,
             residual_dropout=0.1,
-            attention_dropout=0.1)
+            attention_dropout=0.1,
+        )
         self.norm = nn.LayerNorm(n_chans)
 
         # out
         self.n_out = out_dims
-        self.dense_out = weight_norm(
-            nn.Linear(n_chans, self.n_out))
+        self.dense_out = weight_norm(nn.Linear(n_chans, self.n_out))
 
-    def forward(self, mel, infer=True, gt_f0=None, return_hz_f0=False, cdecoder = "local_argmax"):
+    def forward(
+        self, mel, infer=True, gt_f0=None, return_hz_f0=False, cdecoder="local_argmax"
+    ):
         """
         input:
             B x n_frames x n_unit
@@ -106,10 +120,14 @@ class FCPE(nn.Module):
         if not infer:
             gt_cent_f0 = self.f0_to_cent(gt_f0)  # mel f0  #[B,N,1]
             gt_cent_f0 = self.gaussian_blurred_cent(gt_cent_f0)  # #[B,N,out_dim]
-            loss_all = self.loss_mse_scale * F.binary_cross_entropy(x, gt_cent_f0)  # bce loss
+            loss_all = self.loss_mse_scale * F.binary_cross_entropy(
+                x, gt_cent_f0
+            )  # bce loss
             # l2 regularization
             if self.loss_l2_regularization:
-                loss_all = loss_all + l2_regularization(model=self, l2_alpha=self.loss_l2_regularization_scale)
+                loss_all = loss_all + l2_regularization(
+                    model=self, l2_alpha=self.loss_l2_regularization_scale
+                )
             x = loss_all
         if infer:
             x = self.cdecoder(x)
@@ -121,7 +139,9 @@ class FCPE(nn.Module):
     def cents_decoder(self, y, mask=True):
         B, N, _ = y.size()
         ci = self.cent_table[None, None, :].expand(B, N, -1)
-        rtn = torch.sum(ci * y, dim=-1, keepdim=True) / torch.sum(y, dim=-1, keepdim=True)  # cents: [B,N,1]
+        rtn = torch.sum(ci * y, dim=-1, keepdim=True) / torch.sum(
+            y, dim=-1, keepdim=True
+        )  # cents: [B,N,1]
         if mask:
             confident = torch.max(y, dim=-1, keepdim=True)[0]
             confident_mask = torch.ones_like(confident)
@@ -131,17 +151,19 @@ class FCPE(nn.Module):
             return rtn, confident
         else:
             return rtn
-        
+
     def cents_local_decoder(self, y, mask=True):
         B, N, _ = y.size()
         ci = self.cent_table[None, None, :].expand(B, N, -1)
         confident, max_index = torch.max(y, dim=-1, keepdim=True)
-        local_argmax_index = torch.arange(0,9).to(max_index.device) + (max_index - 4)
-        local_argmax_index[local_argmax_index<0] = 0
-        local_argmax_index[local_argmax_index>=self.n_out] = self.n_out - 1
-        ci_l = torch.gather(ci,-1,local_argmax_index)
-        y_l = torch.gather(y,-1,local_argmax_index)
-        rtn = torch.sum(ci_l * y_l, dim=-1, keepdim=True) / torch.sum(y_l, dim=-1, keepdim=True)  # cents: [B,N,1]
+        local_argmax_index = torch.arange(0, 9).to(max_index.device) + (max_index - 4)
+        local_argmax_index[local_argmax_index < 0] = 0
+        local_argmax_index[local_argmax_index >= self.n_out] = self.n_out - 1
+        ci_l = torch.gather(ci, -1, local_argmax_index)
+        y_l = torch.gather(y, -1, local_argmax_index)
+        rtn = torch.sum(ci_l * y_l, dim=-1, keepdim=True) / torch.sum(
+            y_l, dim=-1, keepdim=True
+        )  # cents: [B,N,1]
         if mask:
             confident_mask = torch.ones_like(confident)
             confident_mask[confident <= self.threshold] = float("-INF")
@@ -152,13 +174,13 @@ class FCPE(nn.Module):
             return rtn
 
     def cent_to_f0(self, cent):
-        return 10. * 2 ** (cent / 1200.)
+        return 10.0 * 2 ** (cent / 1200.0)
 
     def f0_to_cent(self, f0):
-        return 1200. * torch.log2(f0 / 10.)
+        return 1200.0 * torch.log2(f0 / 10.0)
 
     def gaussian_blurred_cent(self, cents):  # cents: [B,N,1]
-        mask = (cents > 0.1) & (cents < (1200. * np.log2(self.f0_max / 10.)))
+        mask = (cents > 0.1) & (cents < (1200.0 * np.log2(self.f0_max / 10.0)))
         B, N, _ = cents.size()
         ci = self.cent_table[None, None, :].expand(B, N, -1)
         return torch.exp(-torch.square(ci - cents) / 1250) * mask.float()
@@ -167,7 +189,7 @@ class FCPE(nn.Module):
 class FCPEInfer:
     def __init__(self, model_path, device=None, dtype=torch.float32):
         if device is None:
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
         ckpt = torch.load(model_path, map_location=torch.device(self.device))
         self.args = DotDict(ckpt["config"])
@@ -189,7 +211,7 @@ class FCPEInfer:
             confidence=self.args.model.confidence,
         )
         model.to(self.device).to(self.dtype)
-        model.load_state_dict(ckpt['model'])
+        model.load_state_dict(ckpt["model"])
         model.eval()
         self.model = model
         self.wav2mel = Wav2Mel(self.args, dtype=self.dtype, device=self.device)
@@ -197,20 +219,19 @@ class FCPEInfer:
     @torch.no_grad()
     def __call__(self, audio, sr, threshold=0.05):
         self.model.threshold = threshold
-        audio = audio[None,:]
+        audio = audio[None, :]
         mel = self.wav2mel(audio=audio, sample_rate=sr).to(self.dtype)
         f0 = self.model(mel=mel, infer=True, return_hz_f0=True)
         return f0
 
 
 class Wav2Mel:
-
     def __init__(self, args, device=None, dtype=torch.float32):
         # self.args = args
         self.sampling_rate = args.mel.sampling_rate
         self.hop_size = args.mel.hop_size
         if device is None:
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
         self.dtype = dtype
         self.stft = STFT(
@@ -220,12 +241,14 @@ class Wav2Mel:
             args.mel.win_size,
             args.mel.hop_size,
             args.mel.fmin,
-            args.mel.fmax
+            args.mel.fmax,
         )
         self.resample_kernel = {}
 
     def extract_nvstft(self, audio, keyshift=0, train=False):
-        mel = self.stft.get_mel(audio, keyshift=keyshift, train=train).transpose(1, 2)  # B, n_frames, bins
+        mel = self.stft.get_mel(audio, keyshift=keyshift, train=train).transpose(
+            1, 2
+        )  # B, n_frames, bins
         return mel
 
     def extract_mel(self, audio, sample_rate, keyshift=0, train=False):
@@ -236,12 +259,18 @@ class Wav2Mel:
         else:
             key_str = str(sample_rate)
             if key_str not in self.resample_kernel:
-                self.resample_kernel[key_str] = Resample(sample_rate, self.sampling_rate, lowpass_filter_width=128)
-            self.resample_kernel[key_str] = self.resample_kernel[key_str].to(self.dtype).to(self.device)
+                self.resample_kernel[key_str] = Resample(
+                    sample_rate, self.sampling_rate, lowpass_filter_width=128
+                )
+            self.resample_kernel[key_str] = (
+                self.resample_kernel[key_str].to(self.dtype).to(self.device)
+            )
             audio_res = self.resample_kernel[key_str](audio)
 
         # extract
-        mel = self.extract_nvstft(audio_res, keyshift=keyshift, train=train)  # B, n_frames, bins
+        mel = self.extract_nvstft(
+            audio_res, keyshift=keyshift, train=train
+        )  # B, n_frames, bins
         n_frames = int(audio.shape[1] // self.hop_size) + 1
         if n_frames > int(mel.shape[1]):
             mel = torch.cat((mel, mel[:, -1:, :]), 1)

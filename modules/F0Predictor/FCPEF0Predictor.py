@@ -10,14 +10,22 @@ from .fcpe.model import FCPEInfer
 
 
 class FCPEF0Predictor(F0Predictor):
-    def __init__(self, hop_length=512, f0_min=50, f0_max=1100, dtype=torch.float32, device=None, sampling_rate=44100,
-                 threshold=0.05):
+    def __init__(
+        self,
+        hop_length=512,
+        f0_min=50,
+        f0_max=1100,
+        dtype=torch.float32,
+        device=None,
+        sampling_rate=44100,
+        threshold=0.05,
+    ):
         self.fcpe = FCPEInfer(model_path="pretrain/fcpe.pt", device=device, dtype=dtype)
         self.hop_length = hop_length
         self.f0_min = f0_min
         self.f0_max = f0_max
         if device is None:
-            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
         self.threshold = threshold
@@ -26,7 +34,10 @@ class FCPEF0Predictor(F0Predictor):
         self.name = "fcpe"
 
     def repeat_expand(
-            self, content: Union[torch.Tensor, np.ndarray], target_len: int, mode: str = "nearest"
+        self,
+        content: Union[torch.Tensor, np.ndarray],
+        target_len: int,
+        mode: str = "nearest",
     ):
         ndim = content.ndim
 
@@ -73,10 +84,13 @@ class FCPEF0Predictor(F0Predictor):
         vuv_vector = F.interpolate(vuv_vector[None, None, :], size=pad_to)[0][0]
 
         if f0.shape[0] <= 0:
-            return torch.zeros(pad_to, dtype=torch.float, device=x.device).cpu().numpy(), vuv_vector.cpu().numpy()
+            return torch.zeros(
+                pad_to, dtype=torch.float, device=x.device
+            ).cpu().numpy(), vuv_vector.cpu().numpy()
         if f0.shape[0] == 1:
-            return (torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[
-                0]).cpu().numpy(), vuv_vector.cpu().numpy()
+            return (
+                torch.ones(pad_to, dtype=torch.float, device=x.device) * f0[0]
+            ).cpu().numpy(), vuv_vector.cpu().numpy()
 
         # 大概可以用 torch 重写?
         f0 = np.interp(time_frame, time_org, f0, left=f0[0], right=f0[-1])
@@ -90,7 +104,7 @@ class FCPEF0Predictor(F0Predictor):
             p_len = x.shape[0] // self.hop_length
         else:
             assert abs(p_len - x.shape[0] // self.hop_length) < 4, "pad length error"
-        f0 = self.fcpe(x, sr=self.sampling_rate, threshold=self.threshold)[0,:,0]
+        f0 = self.fcpe(x, sr=self.sampling_rate, threshold=self.threshold)[0, :, 0]
         if torch.all(f0 == 0):
             rtn = f0.cpu().numpy() if p_len is None else np.zeros(p_len)
             return rtn, rtn
@@ -102,7 +116,7 @@ class FCPEF0Predictor(F0Predictor):
             p_len = x.shape[0] // self.hop_length
         else:
             assert abs(p_len - x.shape[0] // self.hop_length) < 4, "pad length error"
-        f0 = self.fcpe(x, sr=self.sampling_rate, threshold=self.threshold)[0,:,0]
+        f0 = self.fcpe(x, sr=self.sampling_rate, threshold=self.threshold)[0, :, 0]
         if torch.all(f0 == 0):
             rtn = f0.cpu().numpy() if p_len is None else np.zeros(p_len)
             return rtn, rtn

@@ -4,7 +4,6 @@ class SpeechEncoder(object):
         self.hidden_dim = 768
         pass
 
-
     def encoder(self, wav):
         """
         input: wav:[signal_length]

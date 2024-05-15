@@ -11,12 +11,14 @@ from .resample import DownSample1d, UpSample1d
 
 
 class Activation1d(nn.Module):
-    def __init__(self,
-                 activation,
-                 up_ratio: int = 2,
-                 down_ratio: int = 2,
-                 up_kernel_size: int = 12,
-                 down_kernel_size: int = 12):
+    def __init__(
+        self,
+        activation,
+        up_ratio: int = 2,
+        down_ratio: int = 2,
+        up_kernel_size: int = 12,
+        down_kernel_size: int = 12,
+    ):
         super().__init__()
         self.up_ratio = up_ratio
         self.down_ratio = down_ratio
@@ -34,7 +36,7 @@ class Activation1d(nn.Module):
 
 
 class SnakeBeta(nn.Module):
-    '''
+    """
     A modified Snake function which uses separate parameters for the magnitude of the periodic components
     Shape:
         - Input: (B, C, T)
@@ -49,10 +51,12 @@ class SnakeBeta(nn.Module):
         >>> a1 = snakebeta(256)
         >>> x = torch.randn(256)
         >>> x = a1(x)
-    '''
+    """
 
-    def __init__(self, in_features, alpha=1.0, alpha_trainable=True, alpha_logscale=False):
-        '''
+    def __init__(
+        self, in_features, alpha=1.0, alpha_trainable=True, alpha_logscale=False
+    ):
+        """
         Initialization.
         INPUT:
             - in_features: shape of the input
@@ -61,7 +65,7 @@ class SnakeBeta(nn.Module):
             alpha is initialized to 1 by default, higher values = higher-frequency.
             beta is initialized to 1 by default, higher values = higher-magnitude.
             alpha will be trained along with the rest of your model.
-        '''
+        """
         super(SnakeBeta, self).__init__()
         self.in_features = in_features
         # initialize alpha
@@ -77,13 +81,12 @@ class SnakeBeta(nn.Module):
         self.no_div_by_zero = 0.000000001
 
     def forward(self, x):
-        '''
+        """
         Forward pass of the function.
         Applies the function to the input elementwise.
         SnakeBeta = x + 1/b * sin^2 (xa)
-        '''
-        alpha = self.alpha.unsqueeze(
-            0).unsqueeze(-1)  # line up with x to [B, C, T]
+        """
+        alpha = self.alpha.unsqueeze(0).unsqueeze(-1)  # line up with x to [B, C, T]
         beta = self.beta.unsqueeze(0).unsqueeze(-1)
         if self.alpha_logscale:
             alpha = torch.exp(alpha)
@@ -94,8 +97,8 @@ class SnakeBeta(nn.Module):
 
 class Mish(nn.Module):
     """
-    Mish activation function is proposed in "Mish: A Self 
-    Regularized Non-Monotonic Neural Activation Function" 
+    Mish activation function is proposed in "Mish: A Self
+    Regularized Non-Monotonic Neural Activation Function"
     paper, https://arxiv.org/abs/1908.08681.
     """
 
@@ -107,13 +110,15 @@ class Mish(nn.Module):
 
 
 class SnakeAlias(nn.Module):
-    def __init__(self,
-                 channels,
-                 up_ratio: int = 2,
-                 down_ratio: int = 2,
-                 up_kernel_size: int = 12,
-                 down_kernel_size: int = 12,
-                 C = None):
+    def __init__(
+        self,
+        channels,
+        up_ratio: int = 2,
+        down_ratio: int = 2,
+        up_kernel_size: int = 12,
+        down_kernel_size: int = 12,
+        C=None,
+    ):
         super().__init__()
         self.up_ratio = up_ratio
         self.down_ratio = down_ratio

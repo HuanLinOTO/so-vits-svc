@@ -30,9 +30,9 @@ class HardConcrete(nn.Module):
         n_in: int,
         init_mean: float = 0.5,
         init_std: float = 0.01,
-        temperature: float = 2/3,     # from CoFi
+        temperature: float = 2 / 3,  # from CoFi
         stretch: float = 0.1,
-        eps: float = 1e-6
+        eps: float = 1e-6,
     ) -> None:
         """Initialize the HardConcrete module.
         Parameters
@@ -96,7 +96,7 @@ class HardConcrete(nn.Module):
             u = self.log_alpha.new(self.n_in).uniform_(self.eps, 1 - self.eps)
             s = torch.sigmoid((torch.log(u / (1 - u)) + self.log_alpha) / self.beta)
             s = s * (self.limit_r - self.limit_l) + self.limit_l
-            mask = s.clamp(min=0., max=1.)
+            mask = s.clamp(min=0.0, max=1.0)
 
         else:
             # Compile new mask if not cached
@@ -109,7 +109,7 @@ class HardConcrete(nn.Module):
                 soft_mask = torch.sigmoid(self.log_alpha / self.beta * 0.8)
                 # Prune small values to set to 0
                 _, indices = torch.topk(soft_mask, k=num_zeros, largest=False)
-                soft_mask[indices] = 0.
+                soft_mask[indices] = 0.0
                 self.compiled_mask = soft_mask
             mask = self.compiled_mask
 

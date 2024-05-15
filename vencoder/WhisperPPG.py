@@ -26,6 +26,12 @@ class WhisperPPG(SpeechEncoder):
         audio = pad_or_trim(audio)
         mel = log_mel_spectrogram(audio).to(self.dev)
         with torch.no_grad():
-            ppg = self.model.encoder(mel.unsqueeze(0)).squeeze().data.cpu().float().numpy()
-            ppg = torch.FloatTensor(ppg[:ppgln, ]).to(self.dev)
+            ppg = (
+                self.model.encoder(mel.unsqueeze(0))
+                .squeeze()
+                .data.cpu()
+                .float()
+                .numpy()
+            )
+            ppg = torch.FloatTensor(ppg[:ppgln,]).to(self.dev)
             return ppg[None, :, :].transpose(1, 2)

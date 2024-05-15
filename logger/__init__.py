@@ -1,20 +1,18 @@
-from loguru import logger
+import datetime
+import os
+import time
 
+from loguru import logger
 from rich.console import Console
 from rich.logging import RichHandler
-from rich.progress import Progress as _Progress
 from rich.progress import (
+    BarColumn,
     Progress,
     TextColumn,
-    BarColumn,
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
-
-import time
-
-import os
-import datetime
+from rich.progress import Progress as _Progress
 
 console = Console(stderr=None)
 
@@ -36,6 +34,7 @@ def format_level(str, length):
     elif str == "DEBUG  ":
         str = f"[bold cyan]{str}[/bold cyan]"
     return str
+
 
 def default_format(record):
     return f"[green]{record['time'].strftime('%Y-%m-%d %H:%M:%S')}[/green] | [level]{format_level(record['level'].name,7)}[/level] | [cyan]{record['file'].path.replace(os.getcwd()+os.sep,'')}:{record['line']}[/cyan] - [level]{record['message']}[/level]\n"
@@ -60,8 +59,10 @@ warning = logger.warning
 warn = logger.warning
 debug = logger.debug
 
+
 def hps(hps):
     console.print(hps)
+
 
 def Progress():
     return _Progress(

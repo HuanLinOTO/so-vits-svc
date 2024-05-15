@@ -20,7 +20,10 @@ if not os.path.exists("tmp"):
 OUTPUT_FILE = sys.argv[6]
 
 print("Running TTS...")
-print(f"Text: {TEXT}, Language: {LANG}, Gender: {GENDER}, Rate: {RATE}, Volume: {VOLUME}")
+print(
+    f"Text: {TEXT}, Language: {LANG}, Gender: {GENDER}, Rate: {RATE}, Volume: {VOLUME}"
+)
+
 
 async def _main() -> None:
     voices = await VoicesManager.create()
@@ -35,9 +38,10 @@ async def _main() -> None:
         print(f"Using random {LANG} voice: {VOICE}")
     else:
         VOICE = "zh-CN-YunyangNeural"
-        
-    communicate = edge_tts.Communicate(text = TEXT, voice = VOICE, rate = RATE, volume = VOLUME)
+
+    communicate = edge_tts.Communicate(text=TEXT, voice=VOICE, rate=RATE, volume=VOLUME)
     await communicate.save(OUTPUT_FILE)
+
 
 if __name__ == "__main__":
     if sys.platform.startswith("win"):

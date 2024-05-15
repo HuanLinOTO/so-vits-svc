@@ -5,9 +5,12 @@ from vencoder.hubert import hubert_model
 
 
 class HubertSoft(SpeechEncoder):
-    def __init__(self, vec_path="pretrain/hubert-soft-0d54a1f4.pt", device=None, log=True):
+    def __init__(
+        self, vec_path="pretrain/hubert-soft-0d54a1f4.pt", device=None, log=True
+    ):
         super().__init__()
         import logger
+
         if log:
             logger.info("load model(s) from {}".format(vec_path))
         hubert_soft = hubert_model.hubert_soft(vec_path)
@@ -23,8 +26,8 @@ class HubertSoft(SpeechEncoder):
         if feats.dim() == 2:  # double channels
             feats = feats.mean(-1)
         assert feats.dim() == 1, feats.dim()
-        feats = feats[None,None,:]  
+        feats = feats[None, None, :]
         with torch.no_grad():
             with torch.inference_mode():
                 units = self.model.units(feats)
-                return units.transpose(1,2)
+                return units.transpose(1, 2)

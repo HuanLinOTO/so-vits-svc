@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 CORS(app)
 
-logging.getLogger('numba').setLevel(logging.WARNING)
+logging.getLogger("numba").setLevel(logging.WARNING)
 
 
 @app.route("/voiceChangeModel", methods=["POST"])
@@ -31,13 +31,32 @@ def voice_change_model():
     # 模型推理
     if raw_infer:
         # out_audio, out_sr = svc_model.infer(speaker_id, f_pitch_change, input_wav_path)
-        out_audio, out_sr = svc_model.infer(speaker_id, f_pitch_change, input_wav_path, cluster_infer_ratio=0,
-                                            auto_predict_f0=False, noice_scale=0.4, f0_filter=False)
-        tar_audio = torchaudio.functional.resample(out_audio, svc_model.target_sample, daw_sample)
+        out_audio, out_sr = svc_model.infer(
+            speaker_id,
+            f_pitch_change,
+            input_wav_path,
+            cluster_infer_ratio=0,
+            auto_predict_f0=False,
+            noice_scale=0.4,
+            f0_filter=False,
+        )
+        tar_audio = torchaudio.functional.resample(
+            out_audio, svc_model.target_sample, daw_sample
+        )
     else:
-        out_audio = svc.process(svc_model, speaker_id, f_pitch_change, input_wav_path, cluster_infer_ratio=0,
-                                auto_predict_f0=False, noice_scale=0.4, f0_filter=False)
-        tar_audio = torchaudio.functional.resample(torch.from_numpy(out_audio), svc_model.target_sample, daw_sample)
+        out_audio = svc.process(
+            svc_model,
+            speaker_id,
+            f_pitch_change,
+            input_wav_path,
+            cluster_infer_ratio=0,
+            auto_predict_f0=False,
+            noice_scale=0.4,
+            f0_filter=False,
+        )
+        tar_audio = torchaudio.functional.resample(
+            torch.from_numpy(out_audio), svc_model.target_sample, daw_sample
+        )
     # 返回音频
     out_wav_path = io.BytesIO()
     soundfile.write(out_wav_path, tar_audio.cpu().numpy(), daw_sample, format="wav")
@@ -45,7 +64,7 @@ def voice_change_model():
     return send_file(out_wav_path, download_name="temp.wav", as_attachment=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 启用则为直接切片合成，False为交叉淡化方式
     # vst插件调整0.3-0.5s切片时间可以降低延迟，直接切片方法会有连接处爆音、交叉淡化会有轻微重叠声音
     # 自行选择能接受的方法，或将vst最大切片时间调整为1s，此处设为Ture，延迟大音质稳定一些

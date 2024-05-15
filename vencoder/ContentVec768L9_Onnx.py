@@ -5,9 +5,10 @@ from vencoder.encoder import SpeechEncoder
 
 
 class ContentVec768L9_Onnx(SpeechEncoder):
-    def __init__(self,vec_path = "pretrain/vec-768-layer-9.onnx",device=None):
+    def __init__(self, vec_path="pretrain/vec-768-layer-9.onnx", device=None):
         super().__init__()
         import logger
+
         logger.info("load model(s) from {}".format(vec_path))
         self.hidden_dim = 768
         if device is None:
@@ -15,11 +16,11 @@ class ContentVec768L9_Onnx(SpeechEncoder):
         else:
             self.dev = torch.device(device)
 
-        if device == 'cuda' or device == torch.device("cuda"):
-            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        if device == "cuda" or device == torch.device("cuda"):
+            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         else:
-            providers = ['CPUExecutionProvider']
-            
+            providers = ["CPUExecutionProvider"]
+
         self.model = onnxruntime.InferenceSession(vec_path, providers=providers)
 
     def encoder(self, wav):
