@@ -106,8 +106,7 @@ def process_one(filename, hmodel, f0p, device, diff=False, mel_extractor=None):
             np.save(aug_vol_path, aug_vol.to("cpu").numpy())
 
 
-# if __name__ == "__main__":
-def main():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--device", type=str, default=None)
     parser.add_argument(

@@ -6,7 +6,10 @@ from vencoder.encoder import SpeechEncoder
 
 class ContentVec768L12(SpeechEncoder):
     def __init__(
-        self, vec_path="pretrain/checkpoint_best_legacy_500.pt", device=None, log=True
+        self,
+        vec_path="pretrain/contentvec/checkpoint_best_legacy_500.pt",
+        device=None,
+        log=True,
     ):
         super().__init__()
         import logger

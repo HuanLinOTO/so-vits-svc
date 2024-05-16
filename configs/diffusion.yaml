@@ -29,7 +29,7 @@ model:
   type: Diffusion
   use_pitch_aug: true
 spk:
-  TEST: 0
+  wk: 0
 train:
   amp_dtype: fp32
   batch_size: 48
