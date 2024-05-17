@@ -2,15 +2,12 @@ import argparse
 import logging
 import os
 import random
-from concurrent.futures import ProcessPoolExecutor
-from glob import glob
-from multiprocessing import Pipe
-from random import shuffle
 
 import librosa
 import numpy as np
 import torch
 import torch.multiprocessing as mp
+from tqdm import tqdm
 
 import diffusion.logger.utils as du
 import logger
@@ -106,8 +103,8 @@ def process_one(filename, hmodel, f0p, device, diff=False, mel_extractor=None):
             np.save(aug_vol_path, aug_vol.to("cpu").numpy())
 
 
-# if __name__ == "__main__":
-def main():
+if __name__ == "__main__":
+    # def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--device", type=str, default=None)
     parser.add_argument(
@@ -151,15 +148,12 @@ def main():
     # shuffle(filenames)
     mp.set_start_method("spawn", force=True)
 
-    num_processes = args.num_processes
-    if num_processes == 0:
-        num_processes = os.cpu_count()
-
     # 加载 args.filelist 文件
-    with open(args.filelist, "r") as f:
+    with open(args.filelist, "r", encoding="utf-8") as f:
         filenames = f.readlines()
         filenames = [f.strip() for f in filenames]
     hmodel = utils.get_speech_encoder(speech_encoder, device=device, log=False)
     for file in filenames:
         process_one(file, hmodel, f0p, device, args.use_diff, mel_extractor)
+        logger.info("processed 1 file")
         # print(file)

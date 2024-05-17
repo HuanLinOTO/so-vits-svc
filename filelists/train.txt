@@ -1,12 +1,12 @@
-./dataset/44k/wk/tmph5fi_mon - 副本 (2).wav
-./dataset/44k/wk/naxida-2h - 副本 (4).wav
-./dataset/44k/wk/naxida-2h - 副本 (6).wav
-./dataset/44k/wk/tmph5fi_mon - 副本.wav
-./dataset/44k/wk/naxida-2h - 副本 (5).wav
-./dataset/44k/wk/naxida-2h - 副本 (3).wav
-./dataset/44k/wk/naxida-2h - 副本.wav
-./dataset/44k/wk/naxida-2h - 副本 (2).wav
-./dataset/44k/wk/tmph5fi_mon - 副本 (3).wav
-./dataset/44k/wk/tmph5fi_mon - 副本 (6).wav
-./dataset/44k/wk/tmph5fi_mon - 副本 (5).wav
-./dataset/44k/wk/tmph5fi_mon - 副本 (4).wav
+./dataset/44k/wk/tmph5fi_mon - 鍓湰 (5).wav
+./dataset/44k/wk/naxida-2h - 鍓湰 (5).wav
+./dataset/44k/wk/tmph5fi_mon - 鍓湰 (2).wav
+./dataset/44k/wk/naxida-2h - 鍓湰.wav
+./dataset/44k/wk/naxida-2h - 鍓湰 (4).wav
+./dataset/44k/wk/tmph5fi_mon - 鍓湰 (4).wav
+./dataset/44k/wk/naxida-2h - 鍓湰 (3).wav
+./dataset/44k/wk/tmph5fi_mon.wav
+./dataset/44k/wk/tmph5fi_mon - 鍓湰 (6).wav
+./dataset/44k/wk/tmph5fi_mon - 鍓湰 (3).wav
+./dataset/44k/wk/naxida-2h.wav
+./dataset/44k/wk/tmph5fi_mon - 鍓湰.wav

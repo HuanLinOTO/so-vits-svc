@@ -64,7 +64,7 @@ def hps(hps):
     console.print(hps)
 
 
-def Progress():
+def Progress():  # noqa: F811
     return _Progress(
         TextColumn("[progress.description]{task.description}"),
         # TextColumn("[progress.description]W"),

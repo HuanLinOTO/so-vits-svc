@@ -56,9 +56,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config_template = (
-        json.load(open("configs_template/config_tiny_template.json"))
+        json.load(open("configs_template/config_tiny_template.json", encoding="utf-8"))
         if args.tiny
-        else json.load(open("configs_template/config_template.json"))
+        else json.load(open("configs_template/config_template.json", encoding="utf-8"))
     )
     train = []
     val = []
@@ -98,13 +98,13 @@ if __name__ == "__main__":
         shuffle(val)
 
         logger.info("Writing " + args.train_list)
-        with open(args.train_list, "w") as f:
+        with open(args.train_list, "w", encoding="utf-8") as f:
             for fname in progress.track(train, description="Writing train list"):
                 wavpath = fname
                 f.write(wavpath + "\n")
 
         logger.info("Writing " + args.val_list)
-        with open(args.val_list, "w") as f:
+        with open(args.val_list, "w", encoding="utf-8") as f:
             for fname in progress.track(val, description="Writing val list"):
                 wavpath = fname
                 f.write(wavpath + "\n")
@@ -155,7 +155,7 @@ if __name__ == "__main__":
             config_template["model"]["filter_channels"] = 512
 
         logger.info("Writing to configs/config.json")
-        with open("configs/config.json", "w") as f:
+        with open("configs/config.json", "w", encoding="utf-8") as f:
             json.dump(config_template, f, indent=2)
         logger.info("Writing to configs/diffusion.yaml")
         du.save_config("configs/diffusion.yaml", d_config_template)

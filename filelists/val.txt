@@ -1,2 +1,2 @@
-./dataset/44k/wk/naxida-2h.wav
-./dataset/44k/wk/tmph5fi_mon.wav
+./dataset/44k/wk/naxida-2h - 副本 (2).wav
+./dataset/44k/wk/naxida-2h - 副本 (6).wav
