@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 
 import logger
@@ -7,36 +8,46 @@ import logger
 async def exec_it(command, callback):
     accumulated_output = ""
     try:
-        # command = 'python -c "import time; [print(i) or time.sleep(1) for i in range(1, 6)]"'
-        result = subprocess.Popen(
+        process = await asyncio.create_subprocess_shell(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            shell=True,
-            text=True,
         )
-        for line in result.stdout:
-            callback(line)
-        result.communicate()
+        while True:
+            line = await process.stdout.readline()
+            if not line:
+                break
+            callback(str(line))
+        
+        await process.wait()
     except subprocess.CalledProcessError as e:
         result = e.output
         accumulated_output += f"Error: {result}\n"
         callback(accumulated_output)
 
 
-def callback_demo(output):
-    if "processed 1 file" in output:
-        print("callback_demo: processed 1 file")
+def callback_demo(name):
+    def real_cb(output):
+        # logger.info(output.strip())
+        if "processed 1 file" in output:
+            print(f"{name}: processed 1 file")
+    return real_cb
 
 
 async def main():
-    filelists = ["filelists/train.txt", "filelists/val.txt"]
+    # 扫描 filelists\1716012223 下面的 txt 变成 filelists 数组
+    filelists = []
+    for root, dirs, files in os.walk("filelists/1716012441"):
+        for file in files:
+            if file.endswith(".txt"):
+                filelists.append(os.path.join(root, file))
     tasks = []
+    print(filelists)
     for filelist in filelists:
         tasks.append(
             exec_it(
                 f"python preprocess_chunk.py --filelist {filelist}",
-                callback=callback_demo,
+                callback=callback_demo(filelist),
             )
         )
     await asyncio.gather(*tasks)

@@ -1,2 +1,2 @@
-./dataset/44k/wk/naxida-2h - 副本 (2).wav
-./dataset/44k/wk/naxida-2h - 副本 (6).wav
+./dataset/44k/sliced/青芽_0000_0010.wav
+./dataset/44k/sliced/夏夜庆典_0000_0009.wav

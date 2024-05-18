@@ -173,5 +173,5 @@ test_pipe.py
 test_queue.py
 
 tmp/*
-configs/diffusion.yaml
-configs/config.json
+configs/*
+filelists/*

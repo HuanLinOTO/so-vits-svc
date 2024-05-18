@@ -102,6 +102,6 @@
     "use_transformer_flow": false
   },
   "spk": {
-    "wk": 0
+    "sliced": 0
   }
 }
