@@ -166,7 +166,7 @@ pretrain/
 
 trained/**/
 
-configs/
+configs/*
 filelists/*
 filelists/val.txt
 test_pipe.py
@@ -177,3 +177,4 @@ configs/*
 filelists/*
 
 models/
+chunks_temp.json
