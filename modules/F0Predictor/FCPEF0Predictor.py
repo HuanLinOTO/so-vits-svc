@@ -20,7 +20,9 @@ class FCPEF0Predictor(F0Predictor):
         sampling_rate=44100,
         threshold=0.05,
     ):
-        self.fcpe = FCPEInfer(model_path="pretrain/fcpe.pt", device=device, dtype=dtype)
+        self.fcpe = FCPEInfer(
+            model_path="pretrain/fcpe/fcpe.pt", device=device, dtype=dtype
+        )
         self.hop_length = hop_length
         self.f0_min = f0_min
         self.f0_max = f0_max

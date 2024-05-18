@@ -6,7 +6,7 @@ from vencoder.hubert import hubert_model
 
 class HubertSoft(SpeechEncoder):
     def __init__(
-        self, vec_path="pretrain/hubert-soft-0d54a1f4.pt", device=None, log=True
+        self, vec_path="pretrain/hubert/hubert-soft-0d54a1f4.pt", device=None, log=True
     ):
         super().__init__()
         import logger

@@ -329,12 +329,12 @@ def main():
                 "second_encoding": second_encoding,
                 "loudness_envelope_adjustment": loudness_envelope_adjustment,
             }
-            try:
-                audio = svc_model.slice_inference(**kwarg)
-            except Exception as e:
-                logger.error(f"Error in {clean_name} {spk} {tran}")
-                logger.error(e)
-                return
+            # try:
+            audio = svc_model.slice_inference(**kwarg)
+            # except Exception as e:
+            #     logger.error(f"Error in {clean_name} {spk} {tran}")
+            #     logger.error(e)
+            #     return
             key = "auto" if auto_predict_f0 else f"{tran}key"
             cluster_name = "" if cluster_infer_ratio == 0 else f"_{cluster_infer_ratio}"
             isdiffusion = "sovits"

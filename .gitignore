@@ -175,3 +175,5 @@ test_queue.py
 tmp/*
 configs/*
 filelists/*
+
+models/
