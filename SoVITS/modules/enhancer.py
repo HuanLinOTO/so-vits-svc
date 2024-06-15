@@ -3,8 +3,8 @@ import torch
 import torch.nn.functional as F
 from torchaudio.transforms import Resample
 
-from SoVITS.vdecoder.nsf_hifigan.models import load_model
-from SoVITS.vdecoder.nsf_hifigan.nvSTFT import STFT
+from ..vdecoder.nsf_hifigan.models import load_model
+from ..vdecoder.nsf_hifigan.nvSTFT import STFT
 
 
 class Enhancer:

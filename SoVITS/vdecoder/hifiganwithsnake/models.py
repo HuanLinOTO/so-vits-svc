@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.nn import AvgPool1d, Conv1d, Conv2d, ConvTranspose1d
 from torch.nn.utils import remove_weight_norm, spectral_norm, weight_norm
 
-from SoVITS.vdecoder.hifiganwithsnake.alias.act import SnakeAlias
+from .alias.act import SnakeAlias
 
 from .env import AttrDict
 from .utils import get_padding, init_weights

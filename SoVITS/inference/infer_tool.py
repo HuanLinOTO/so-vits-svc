@@ -228,7 +228,7 @@ class Svc(object):
         if self.shallow_diffusion:
             self.nsf_hifigan_enhance = False
         if self.nsf_hifigan_enhance:
-            from modules.enhancer import Enhancer
+            from SoVITS.modules.enhancer import Enhancer
 
             self.enhancer = Enhancer(
                 "nsf-hifigan", "pretrain/nsf_hifigan/model", device=self.dev

@@ -263,7 +263,7 @@ def main():
     shallow_diffusion = args.shallow_diffusion
     use_spk_mix = args.use_spk_mix
     second_encoding = args.second_encoding
-    loudness_envelope_adjustment = args.loudness_envelope_adjustment
+    loudness_envelope_adjustment = args.loudness_envelope_adjustment  # default: 1
 
     model_path = args.model_path
 

@@ -533,16 +533,16 @@ class SynthesizerTrn(nn.Module):
         modules.set_Conv1dModel(self.use_depthwise_conv)
 
         if vocoder_name == "nsf-hifigan":
-            from SoVITS.vdecoder.hifigan.models import Generator
+            from .vdecoder.hifigan.models import Generator
 
             self.dec = Generator(h=hps)
         elif vocoder_name == "nsf-snake-hifigan":
-            from SoVITS.vdecoder.hifiganwithsnake.models import Generator
+            from .vdecoder.hifiganwithsnake.models import Generator
 
             self.dec = Generator(h=hps)
         else:
             print("[?] Unkown vocoder: use default(nsf-hifigan)")
-            from SoVITS.vdecoder.hifigan.models import Generator
+            from .vdecoder.hifigan.models import Generator
 
             self.dec = Generator(h=hps)
 

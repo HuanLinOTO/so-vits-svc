@@ -1,8 +1,8 @@
 import torch
 from torchaudio.transforms import Resample
 
-from SoVITS.vdecoder.nsf_hifigan.models import load_config, load_model
-from SoVITS.vdecoder.nsf_hifigan.nvSTFT import STFT
+from ..vdecoder.nsf_hifigan.models import load_config, load_model
+from ..vdecoder.nsf_hifigan.nvSTFT import STFT
 
 
 class Vocoder:
