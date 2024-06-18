@@ -213,7 +213,7 @@ class FCPEInfer:
 
 
 class Wav2Mel:
-
+    #torchfcpe支持wav做输入，所以把这里的wav2mel删掉了😨😨
     def extract_nvstft(self, audio, keyshift=0, train=False):
         mel = self.stft.get_mel(audio, keyshift=keyshift, train=train).transpose(
             1, 2
