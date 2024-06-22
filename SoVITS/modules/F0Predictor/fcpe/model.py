@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch.nn.utils import weight_norm
 from torchaudio.transforms import Resample
 from torchfcpe import spawn_bundled_infer_model
-from .nvSTFT import STFT
+
 from .pcmer import PCmer
 
 
@@ -196,14 +196,13 @@ class FCPEInfer:
         # 使用 spawn_bundled_infer_model 加载模型和配置
         self.model = spawn_bundled_infer_model(device=self.device)
 
-
     def __call__(self, audio, sr, threshold=0.05):
         self.model.threshold = threshold
         audio = audio[None, :]
         f0 = self.model.infer(
             audio,
             sr=sr,
-            decoder_mode='local_argmax',
+            decoder_mode="local_argmax",
             threshold=0.006,
             f0_min=80,
             f0_max=880,
@@ -213,7 +212,7 @@ class FCPEInfer:
 
 
 class Wav2Mel:
-    #torchfcpe支持wav做输入，所以把这里的wav2mel删掉了😨😨
+    # torchfcpe支持wav做输入，所以把这里的wav2mel删掉了😨😨
     def extract_nvstft(self, audio, keyshift=0, train=False):
         mel = self.stft.get_mel(audio, keyshift=keyshift, train=train).transpose(
             1, 2
