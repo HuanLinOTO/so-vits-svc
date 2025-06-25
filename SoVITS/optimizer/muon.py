@@ -153,9 +153,12 @@ class Muon_AdamW(ChainedOptimizer):
         specs = [spec_muon, spec_adamw]
         callback = None
         if verbose:
-            callback = lambda p, spec_idx: print(
-                f"Adding param {p.shape} to optimizer{spec_idx} {str(specs[spec_idx].class_type)}"
-            )
+
+            def callback(p, spec_idx):
+                return print(
+                    f"Adding param {p.shape} to optimizer{spec_idx} {str(specs[spec_idx].class_type)}"
+                )
+
         super().__init__(
             model.parameters(),
             specs,

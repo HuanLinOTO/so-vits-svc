@@ -27,6 +27,7 @@ from SoVITS.modules.losses import (
     kl_loss,
 )
 from SoVITS.modules.mel_processing import mel_spectrogram_torch, spec_to_mel_torch
+from SoVITS.optimizer.muon import Muon_AdamW
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("numba").setLevel(logging.WARNING)
@@ -62,7 +63,7 @@ def run(rank, n_gpus, hps):
     if rank == 0:
         logger = utils.get_logger(hps.model_dir)
         logger.hps(hps)
-        utils.check_git_hash(hps.model_dir)
+        # utils.check_git_hash(hps.model_dir)
         writer = SummaryWriter(log_dir=hps.model_dir)
         writer_eval = SummaryWriter(log_dir=os.path.join(hps.model_dir, "eval"))
 
@@ -118,17 +119,27 @@ def run(rank, n_gpus, hps):
         **hps.model,
     ).cuda(rank)
     net_d = MultiPeriodDiscriminator(hps.model.use_spectral_norm).cuda(rank)
-    optim_g = torch.optim.AdamW(
-        net_g.parameters(),
-        hps.train.learning_rate,
-        betas=hps.train.betas,
-        eps=hps.train.eps,
+    # optim_g = torch.optim.AdamW(
+    #     net_g.parameters(),
+    #     hps.train.learning_rate,
+    #     betas=hps.train.betas,
+    #     eps=hps.train.eps,
+    # )
+    # optim_d = torch.optim.AdamW(
+    #     net_d.parameters(),
+    #     hps.train.learning_rate,
+    #     betas=hps.train.betas,
+    #     eps=hps.train.eps,
+    # )
+    optim_g = Muon_AdamW(
+        net_g,
+        muon_args={"weight_decay": hps.train.weight_decay},
+        adamw_args={"weight_decay": 0},
     )
-    optim_d = torch.optim.AdamW(
-        net_d.parameters(),
-        hps.train.learning_rate,
-        betas=hps.train.betas,
-        eps=hps.train.eps,
+    optim_d = Muon_AdamW(
+        net_g,
+        muon_args={"weight_decay": hps.train.weight_decay},
+        adamw_args={"weight_decay": 0},
     )
     net_g = DDP(net_g, device_ids=[rank])  # , find_unused_parameters=True)
     net_d = DDP(net_d, device_ids=[rank])
@@ -166,20 +177,6 @@ def run(rank, n_gpus, hps):
     scheduler_d = torch.optim.lr_scheduler.ExponentialLR(
         optim_d, gamma=hps.train.lr_decay, last_epoch=epoch_str - 2
     )
-
-    use_torch_compile = int(os.environ.get("USE_TORCH_COMPILE", 0)) == 1
-
-    if use_torch_compile:
-        global train_and_evaluate
-        logger.info(
-            "You are using [green]torch.compile[/green] for faster speed, it's still a [red]beta[/red] feature."
-        )
-        logger.info(
-            "If you has any problem, please issues it with your log at [green]https://github.com/huanlinoto/so-vits-svc.[/green]"
-        )
-        logger.info("Compiling the train_and_evaluate function...")
-        train_and_evaluate = torch.compile(train_and_evaluate)
-        logger.info("Compiled!")
 
     scaler = GradScaler(enabled=hps.train.fp16_run)
     with logger.Progress() as progress:
@@ -453,7 +450,7 @@ def train_and_evaluate(
             now - start_time, ".2f"
         )  # 这里原本是 durtaion，让我看看是谁拼错了（
         logger.info(
-            f"Epoch: {epoch} finished, cost {duration} s, {round(float(duration)/len(train_loader),3)}s per batch"
+            f"Epoch: {epoch} finished, cost {duration} s, {round(float(duration) / len(train_loader), 3)}s per batch"
         )
         start_time = now
 
