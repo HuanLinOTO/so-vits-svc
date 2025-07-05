@@ -445,6 +445,7 @@ class F0Decoder(nn.Module):
 
 
 class SynthesizerTrn(nn.Module):
+    _not_input_spkemb_to_decoder = False
     """
     Synthesizer for Training
     """
@@ -538,6 +539,12 @@ class SynthesizerTrn(nn.Module):
             self.dec = Generator(h=hps)
         elif vocoder_name == "nsf-snake-hifigan":
             from .vdecoder.hifiganwithsnake.models import Generator
+
+            self.dec = Generator(h=hps)
+        elif vocoder_name == "nsf-hifigan-without-spkemb":
+            from .vdecoder.no_spkemb_hifigan.models import Generator
+
+            self._not_input_spkemb_to_decoder = True
 
             self.dec = Generator(h=hps)
         else:
@@ -639,7 +646,10 @@ class SynthesizerTrn(nn.Module):
         )
 
         # nsf decoder
-        o = self.dec(z_slice, g=g, f0=pitch_slice)
+        if self._not_input_spkemb_to_decoder:
+            o = self.dec(z_slice, f0=pitch_slice)
+        else:
+            o = self.dec(z_slice, g=g, f0=pitch_slice)
 
         return (
             o,
@@ -703,5 +713,8 @@ class SynthesizerTrn(nn.Module):
             x, x_mask, f0=f0_to_coarse(f0), noice_scale=noice_scale
         )
         z = self.flow(z_p, c_mask, g=g, reverse=True)
-        o = self.dec(z * c_mask, g=g, f0=f0)
+        if self._not_input_spkemb_to_decoder:
+            o = self.dec(z * c_mask, f0=f0)
+        else:
+            o = self.dec(z * c_mask, g=g, f0=f0)
         return o, f0
