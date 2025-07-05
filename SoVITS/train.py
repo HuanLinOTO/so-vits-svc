@@ -1,3 +1,4 @@
+import gc
 import logging
 import multiprocessing
 import os
@@ -125,22 +126,22 @@ def run(rank, n_gpus, hps):
     #     betas=hps.train.betas,
     #     eps=hps.train.eps,
     # )
-    # optim_d = torch.optim.AdamW(
-    #     net_d.parameters(),
-    #     hps.train.learning_rate,
-    #     betas=hps.train.betas,
-    #     eps=hps.train.eps,
-    # )
+    optim_d = torch.optim.AdamW(
+        net_d.parameters(),
+        hps.train.learning_rate,
+        betas=hps.train.betas,
+        eps=hps.train.eps,
+    )
     optim_g = Muon_AdamW(
         net_g,
         muon_args={"weight_decay": hps.train.weight_decay},
         adamw_args={"weight_decay": 0},
     )
-    optim_d = Muon_AdamW(
-        net_g,
-        muon_args={"weight_decay": hps.train.weight_decay},
-        adamw_args={"weight_decay": 0},
-    )
+    # optim_d = Muon_AdamW(
+    #     net_g,
+    #     muon_args={"weight_decay": hps.train.weight_decay},
+    #     adamw_args={"weight_decay": 0},
+    # )
     net_g = DDP(net_g, device_ids=[rank])  # , find_unused_parameters=True)
     net_d = DDP(net_d, device_ids=[rank])
 
@@ -378,31 +379,33 @@ def train_and_evaluate(
                 # scalar_dict.update({"loss/g/{}".format(i): v for i, v in enumerate(losses_gen)})
                 # scalar_dict.update({"loss/d_r/{}".format(i): v for i, v in enumerate(losses_disc_r)})
                 # scalar_dict.update({"loss/d_g/{}".format(i): v for i, v in enumerate(losses_disc_g)})
-                image_dict = {
-                    "slice/mel_org": utils.plot_spectrogram_to_numpy(
-                        y_mel[0].data.cpu().numpy()
-                    ),
-                    "slice/mel_gen": utils.plot_spectrogram_to_numpy(
-                        y_hat_mel[0].data.cpu().numpy()
-                    ),
-                    "all/mel": utils.plot_spectrogram_to_numpy(
-                        mel[0].data.cpu().numpy()
-                    ),
-                }
+                image_dict = {}
+                if global_step % hps.train.eval_interval == 0:
+                    image_dict = {
+                        "slice/mel_org": utils.plot_spectrogram_to_numpy(
+                            y_mel[0].data.cpu().numpy()
+                        ),
+                        "slice/mel_gen": utils.plot_spectrogram_to_numpy(
+                            y_hat_mel[0].data.cpu().numpy()
+                        ),
+                        "all/mel": utils.plot_spectrogram_to_numpy(
+                            mel[0].data.cpu().numpy()
+                        ),
+                    }
 
-                if net_g.module.use_automatic_f0_prediction:
-                    image_dict.update(
-                        {
-                            "all/lf0": utils.plot_data_to_numpy(
-                                lf0[0, 0, :].cpu().numpy(),
-                                pred_lf0[0, 0, :].detach().cpu().numpy(),
-                            ),
-                            "all/norm_lf0": utils.plot_data_to_numpy(
-                                lf0[0, 0, :].cpu().numpy(),
-                                norm_lf0[0, 0, :].detach().cpu().numpy(),
-                            ),
-                        }
-                    )
+                    if net_g.module.use_automatic_f0_prediction:
+                        image_dict.update(
+                            {
+                                "all/lf0": utils.plot_data_to_numpy(
+                                    lf0[0, 0, :].cpu().numpy(),
+                                    pred_lf0[0, 0, :].detach().cpu().numpy(),
+                                ),
+                                "all/norm_lf0": utils.plot_data_to_numpy(
+                                    lf0[0, 0, :].cpu().numpy(),
+                                    norm_lf0[0, 0, :].detach().cpu().numpy(),
+                                ),
+                            }
+                        )
 
                 utils.summarize(
                     writer=writer,
@@ -452,6 +455,9 @@ def train_and_evaluate(
         logger.info(
             f"Epoch: {epoch} finished, cost {duration} s, {round(float(duration) / len(train_loader), 3)}s per batch"
         )
+        del enumerated_train_loader
+        torch.cuda.empty_cache()
+        gc.collect()
         start_time = now
 
 
